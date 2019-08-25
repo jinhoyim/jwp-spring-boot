@@ -1,6 +1,6 @@
 package support.test;
 
-import myblog.user.dto.UserUpdatedDto;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -14,10 +14,10 @@ public class NsWebTestClient {
     private static final String BASE_URL = "http://localhost";
 
     private String baseUrl = BASE_URL;
-    private int port;
+    private final int port;
     private WebTestClient.Builder testClientBuilder;
 
-    private NsWebTestClient(String baseUrl, int port) {
+    private NsWebTestClient(final String baseUrl, final int port) {
         this.baseUrl = baseUrl;
         this.port = port;
         this.testClientBuilder = WebTestClient
@@ -25,13 +25,28 @@ public class NsWebTestClient {
                 .baseUrl(baseUrl + ":" + port);
     }
 
-    public NsWebTestClient basicAuth(String username, String password) {
-        this.testClientBuilder = testClientBuilder.filter(basicAuthentication(username, password));
+    public static NsWebTestClient of(final int port) {
+        return of(BASE_URL, port);
+    }
+
+    public static NsWebTestClient of(final String baseUrl, final int port) {
+        return new NsWebTestClient(baseUrl, port);
+    }
+
+    public static WebTestClient client(final int port) {
+        return WebTestClient
+                .bindToServer()
+                .baseUrl(BASE_URL + ":" + port)
+                .build();
+    }
+
+    public NsWebTestClient basicAuth(final String username, final String password) {
+        this.testClientBuilder = this.testClientBuilder.filter(basicAuthentication(username, password));
         return this;
     }
 
-    public <T> URI createResource(String url, T body, Class<T> clazz) {
-        EntityExchangeResult<byte[]> response = testClientBuilder.build()
+    public <T> URI createResource(final String url, final T body, final Class<T> clazz) {
+        final EntityExchangeResult<byte[]> response = this.testClientBuilder.build()
                 .post()
                 .uri(url)
                 .body(Mono.just(body), clazz)
@@ -42,16 +57,16 @@ public class NsWebTestClient {
         return response.getResponseHeaders().getLocation();
     }
 
-    public <T> void updateResource(URI location, T body, Class<T> clazz) {
-        updateResource(location.toString(), body, clazz);
+    public <T> void updateResource(final URI location, final T body, final Class<T> clazz) {
+        this.updateResource(location.toString(), body, clazz);
     }
 
-    public <T> void updateResource(String location, T body, Class<T> clazz) {
-        updateResource(location, body, clazz, HttpStatus.OK);
+    public <T> void updateResource(final String location, final T body, final Class<T> clazz) {
+        this.updateResource(location, body, clazz, HttpStatus.OK);
     }
 
-    public <T> void updateResource(String location, T body, Class<T> clazz, HttpStatus httpStatus) {
-        testClientBuilder.build()
+    public <T> void updateResource(final String location, final T body, final Class<T> clazz, final HttpStatus httpStatus) {
+        this.testClientBuilder.build()
                 .put()
                 .uri(location.toString())
                 .body(Mono.just(body), clazz)
@@ -59,8 +74,8 @@ public class NsWebTestClient {
                 .expectStatus().isEqualTo(httpStatus.value());
     }
 
-    public <T> T getResource(URI location, Class<T> clazz) {
-        return testClientBuilder.build()
+    public <T> T getResource(final URI location, final Class<T> clazz) {
+        return this.testClientBuilder.build()
                 .get()
                 .uri(location.toString())
                 .exchange()
@@ -69,18 +84,10 @@ public class NsWebTestClient {
                 .returnResult().getResponseBody();
     }
 
-    public static NsWebTestClient of(int port) {
-        return of(BASE_URL, port);
-    }
-
-    public static NsWebTestClient of(String baseUrl, int port) {
-        return new NsWebTestClient(baseUrl, port);
-    }
-
-    public static WebTestClient client(int port) {
-        return WebTestClient
-                .bindToServer()
-                .baseUrl(BASE_URL + ":" + port)
-                .build();
+    public WebTestClient.ResponseSpec requestResource(final String url, final HttpMethod httpMethod) {
+        return this.testClientBuilder.build()
+                .method(httpMethod)
+                .uri(url)
+                .exchange();
     }
 }

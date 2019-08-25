@@ -3,12 +3,10 @@ package myblog.user.web;
 import myblog.user.domain.User;
 import myblog.user.dto.UserCreatedDto;
 import myblog.user.dto.UserUpdatedDto;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import support.test.AcceptanceTest;
@@ -21,37 +19,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UserAcceptanceTest extends AcceptanceTest {
     private static final Logger logger = LoggerFactory.getLogger(UserAcceptanceTest.class);
 
-    private NsWebTestClient webClient;
-
-    @BeforeEach
-    void setUp() {
-        webClient = NsWebTestClient.of(port);
-    }
-
     @DisplayName("사용자 회원가입/조회/수정/삭제")
     @Test
     void crud() {
         // 회원가입
-        UserCreatedDto expected = new UserCreatedDto("javajigi", "javajigi@nextstep.camp", "password");
-        URI location = createUser(expected);
+        final UserCreatedDto expected = new UserCreatedDto("javajigi", "javajigi@nextstep.camp", "password");
+        final URI location = this.createUser(expected);
 
         // 조회
-        User actual = webClient.getResource(location, User.class);
+        User actual = this.webClient.getResource(location, User.class);
         assertThat(actual.getUserId()).isEqualTo(expected.getUserId());
         assertThat(actual.getEmail()).isEqualTo(expected.getEmail());
 
         // 수정
-        UserUpdatedDto updateUser = new UserUpdatedDto("sanjigi", "sanjigi@nextstep.camp");
-        webClient.basicAuth(expected.getUserId(), expected.getPassword())
+        final UserUpdatedDto updateUser = new UserUpdatedDto("sanjigi", "sanjigi@nextstep.camp");
+        this.webClient.basicAuth(expected.getUserId(), expected.getPassword())
                 .updateResource(location, updateUser, UserUpdatedDto.class);
 
-        actual = webClient.getResource(location, User.class);
+        actual = this.webClient.getResource(location, User.class);
         assertThat(actual.getUserId()).isEqualTo(updateUser.getUserId());
         assertThat(actual.getEmail()).isEqualTo(updateUser.getEmail());
     }
 
-    private URI createUser(UserCreatedDto createdDto) {
-        URI location = webClient.createResource("/users", createdDto, UserCreatedDto.class);
+    private URI createUser(final UserCreatedDto createdDto) {
+        final URI location = this.webClient.createResource("/users", createdDto, UserCreatedDto.class);
         logger.debug("location : {}", location);
         return location;
     }
@@ -59,22 +50,22 @@ public class UserAcceptanceTest extends AcceptanceTest {
     @DisplayName("다른 사용자가 내 정보를 수정")
     @Test
     void update_when_other_user() {
-        UserCreatedDto original = new UserCreatedDto("javajigi", "javajigi@nextstep.camp", "password");
-        URI location = createUser(original);
+        final UserCreatedDto original = new UserCreatedDto("javajigi", "javajigi@nextstep.camp", "password");
+        final URI location = this.createUser(original);
 
-        UserCreatedDto otherUser = new UserCreatedDto("sanjigi", "sanjigi@nextstep.camp", "password");
-        createUser(otherUser);
+        final UserCreatedDto otherUser = new UserCreatedDto("sanjigi", "sanjigi@nextstep.camp", "password");
+        this.createUser(otherUser);
 
-        UserUpdatedDto updateUser = new UserUpdatedDto("sanjigi", "sanjigi@nextstep.camp");
-        webClient.basicAuth(otherUser.getUserId(), otherUser.getPassword())
+        final UserUpdatedDto updateUser = new UserUpdatedDto("sanjigi", "sanjigi@nextstep.camp");
+        this.webClient.basicAuth(otherUser.getUserId(), otherUser.getPassword())
                 .updateResource(location.toString(), updateUser, UserUpdatedDto.class, HttpStatus.FORBIDDEN);
     }
 
     @DisplayName("로그인하지 않은 사용자가 수정")
     @Test
     void update_when_not_login() {
-        UserUpdatedDto updateUser = new UserUpdatedDto("sanjigi", "sanjigi@nextstep.camp");
-        NsWebTestClient.client(port)
+        final UserUpdatedDto updateUser = new UserUpdatedDto("sanjigi", "sanjigi@nextstep.camp");
+        NsWebTestClient.client(this.port)
                 .put()
                 .uri("/users/1")
                 .body(Mono.just(updateUser), UserUpdatedDto.class)
