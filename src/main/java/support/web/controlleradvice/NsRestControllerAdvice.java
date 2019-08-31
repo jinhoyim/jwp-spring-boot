@@ -19,31 +19,32 @@ public class NsRestControllerAdvice {
 
     private final MessageSourceAccessor messageSourceAccessor;
 
-    public NsRestControllerAdvice(MessageSourceAccessor msa) {
+    public NsRestControllerAdvice(final MessageSourceAccessor msa) {
         this.messageSourceAccessor = msa;
     }
 
     @ExceptionHandler(LoginRequiredException.class)
     @ResponseStatus(value = HttpStatus.FORBIDDEN)
-    public NsResponse loginRequired(LoginRequiredException ex) {
-        String errorMessage = messageSourceAccessor.getMessage(ex.getErrorCode());
+    public NsResponse loginRequired(final LoginRequiredException ex) {
+        final String errorMessage = this.messageSourceAccessor.getMessage(ex.getErrorCode());
         logger.debug("Error Message : {}", errorMessage);
         return NsResponse.fail(errorMessage);
     }
 
     @ExceptionHandler(HasNotPermission.class)
     @ResponseStatus(value = HttpStatus.FORBIDDEN)
-    public NsResponse notPermission(HasNotPermission ex) {
-        String errorMessage = messageSourceAccessor.getMessage(ex.getErrorCode(), ex.getArgs());
+    public NsResponse notPermission(final HasNotPermission ex) {
+        final String errorMessage = this.messageSourceAccessor.getMessage(ex.getErrorCode(), ex.getArgs());
         logger.debug("Error Message : {}", errorMessage);
         return NsResponse.fail(errorMessage);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    public NsResponse resourceNotFound(ResourceNotFoundException ex) {
-        String errorMessage = messageSourceAccessor.getMessage(ex.getErrorCode(), ex.getArgs());
+    public NsResponse resourceNotFound(final ResourceNotFoundException ex) {
+        final String errorMessage = this.messageSourceAccessor.getMessage(ex.getErrorCode(), ex.getArgs());
         logger.debug("Error Message : {}", errorMessage);
+
         return NsResponse.fail(errorMessage);
     }
 }
